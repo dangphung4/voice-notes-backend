@@ -1,7 +1,12 @@
 const SpeechToTextV1 = require('ibm-watson/speech-to-text/v1');
 const { IamAuthenticator } = require('ibm-watson/auth');
-const franc = require('franc-min');
+const ffmpeg = require('fluent-ffmpeg');
+const fs = require('fs');
 
+let franc;
+import('franc-min').then(module => {
+    franc = module.default;
+});
 
 const speechToText = new SpeechToTextV1({
     authenticator: new IamAuthenticator({
@@ -10,30 +15,62 @@ const speechToText = new SpeechToTextV1({
     serviceUrl: process.env.WATSON_SERVICE_URL,
 });
 
-console.log(process.env.WATSON_API_KEY);
+const convertToWav = (inputBuffer) => {
+  console.log('Input buffer length:', inputBuffer.length);
 
-const transcribeAudio = async (audioBuffer) => {
+    return new Promise((resolve, reject) => {
+        let bufferStream = new require('stream').PassThrough();
+        bufferStream.end(inputBuffer);
+        let chunks = [];
+
+        ffmpeg()
+            .input(bufferStream)
+            .inputFormat('mp4')
+            .toFormat('wav')
+            .on('data', chunk => chunks.push(chunk))
+            .on('stderr', stderrLine => console.error('Stderr output:', stderrLine))
+            .on('progress', progress => console.log(`Processing:`, progress))
+            .on('end', () => {
+              const wavBuffer = fs.readFileSync('output.wav');
+              resolve(wavBuffer);
+          })
+          
+            .on('error', err => reject(err))
+            .save('output.wav');
+    });
+};
+
+const transcribeAudio = async (audioBuffer, socket) => {
+    fs.writeFileSync('test_input.mp4', audioBuffer);
+
     try {
-        // First, get a snippet transcription for language detection
-        const snippetResponse = await speechToText.recognize({
-            audio: audioBuffer.slice(0, 50000), // only first 50 KB for speed
-            contentType: 'audio/mp4',
-        });
+      const wavAudioBuffer = await convertToWav(audioBuffer);
 
-        const snippetTranscription = snippetResponse.result.results[0]?.alternatives[0]?.transcript || '';
-        const detectedLanguage = franc(snippetTranscription);
+      if(wavAudioBuffer.length > 1000000) {
+          snippetResponse = await speechToText.recognize({
+              audio: wavAudioBuffer,
+              contentType: 'audio/wav',
+          });
+      }
 
-        // Use this detected language for better transcription accuracy (if applicable)
-        const langModel = detectedLanguage === 'eng' ? 'en-US_BroadbandModel' : 'YOUR_DEFAULT_MODEL_HERE';
+       
+        
+        // Default to English if language detection fails or if not English
+        let langModel = 'en-US_BroadbandModel';
 
-        // Actual transcription
         const response = await speechToText.recognize({
-            audio: audioBuffer,
-            contentType: 'audio/mp4',
+            audio: wavAudioBuffer,
+            contentType: 'audio/wav',
             model: langModel,
         });
 
-        return response.result.results[0].alternatives[0].transcript;
+        const transcription = response.result.results.map(result => result.alternatives[0].transcript).join(' ');
+
+        if (socket) {
+            socket.emit('transcription', transcription);
+        }
+
+        return transcription;
     } catch (error) {
         console.error("Error during IBM Watson transcription:", error);
         return null;

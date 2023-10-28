@@ -1,8 +1,7 @@
+const multerUpload = require('../middleware/upload');
 const express = require('express');
 const router = express.Router();
-const multerUpload = require('../middleware/upload');
-const { transcribeAudio } = require('../utils/watson');
-const audioMetadata = require('audio-metadata');
+const { transcribeAudio } = require('../utils/watson.js');
 
 
 
@@ -12,17 +11,24 @@ router.post('/upload', multerUpload.single('audio'), async (req, res) => {
         return res.status(400).send('No file uploaded.');
     }
 
-    const metadata = audioMetadata.parseBlob(req.file.buffer);
-    if (metadata.duration > 120) {
-        return res.status(400).send('Audio is too long. Please upload a shorter clip.');
-    }
+    console.log('File received.');
+    console.log('File size:', req.file.size);
 
-    const transcription = await transcribeAudio(req.file.buffer);
-    if (transcription) {
-        res.send(transcription);
-    } else {
-        res.status(500).send('Error during transcription.');
+
+    console.log('Starting audio conversion...');
+
+
+    try {
+        const transcription = await transcribeAudio(req.file.buffer);
+        if (transcription) {
+            res.send(transcription);
+        } else {
+            res.status(500).send('Error during transcription.');
+        }
+    } catch (error) {
+        res.status(500).send('Error during transcription: ' + error.message);
     }
+    
 });
 
 module.exports = router;
