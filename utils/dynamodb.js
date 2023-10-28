@@ -11,7 +11,7 @@ const docClient = new AWS.DynamoDB.DocumentClient();
 
 const saveTranscriptionToDB  = (transcription, summary) => {
     const params = {
-        TableName: 'Transcriptions',  // Make sure the table name matches what you've set in DynamoDB
+        TableName: 'Transcriptions',  
         Item: {
           id: Date.now().toString(), // unique identifier, using timestamp for simplicity
           transcription: transcription
@@ -27,4 +27,25 @@ const saveTranscriptionToDB  = (transcription, summary) => {
     });
 };
 
-module.exports = { saveTranscriptionToDB ,docClient };
+const updateTranscriptionInDB = async (id, updatedTranscription) => {
+    const params = {
+        TableName: "Transcriptions",
+        Key: {
+            "id": id
+        },
+        UpdateExpression: "set transcription = :t",
+        ExpressionAttributeValues: {
+            ":t": updatedTranscription
+        },
+        ReturnValues: "UPDATED_NEW"
+    };
+
+    try {
+        await docClient.update(params).promise();
+    } catch (err) {
+        console.error("Unable to update item. Error:", JSON.stringify(err, null, 2));
+        throw err;
+    }
+};
+
+module.exports = { saveTranscriptionToDB , updateTranscriptionInDB, docClient };

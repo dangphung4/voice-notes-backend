@@ -1,5 +1,5 @@
 const express = require('express');
-const { saveTranscriptionToDB , docClient} = require('./dynamodb');
+const { saveTranscriptionToDB , updateTranscriptionInDB, docClient} = require('./dynamodb');
 const router = express.Router();
 const {  OpenAI} = require("openai");
 
@@ -64,6 +64,10 @@ router.post('/summarize', async (req, res) => {
     try {
         const transcription = await fetchTranscription(id);
         const summary = await getSummary(transcription);
+
+         // Update the transcription in the database with the summary
+         await updateTranscriptionInDB(id, summary);
+
         res.json({ summary });
     } catch (error) {
         res.status(500).json({ error: "Error summarizing the transcription" });
@@ -75,6 +79,10 @@ router.post('/elaborate', async (req, res) => {
     try {
         const transcription = await fetchTranscription(id);
         const elaboration = await getElaboration(transcription);
+
+         // Update the transcription in the database with the elaboration
+         await updateTranscriptionInDB(id, elaboration);
+         
         res.json({ elaboration });
     } catch (error) {
         res.status(500).json({ error: "Error elaborating the transcription" });
