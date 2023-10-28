@@ -2,6 +2,7 @@ const SpeechToTextV1 = require('ibm-watson/speech-to-text/v1');
 const { IamAuthenticator } = require('ibm-watson/auth');
 const ffmpeg = require('fluent-ffmpeg');
 const fs = require('fs');
+const { saveTranscriptionToDB } = require('./dynamodb');  // Adjust the path as per your directory structure
 
 let franc;
 import('franc-min').then(module => {
@@ -65,6 +66,8 @@ const transcribeAudio = async (audioBuffer, socket) => {
         });
 
         const transcription = response.result.results.map(result => result.alternatives[0].transcript).join(' ');
+
+        saveTranscriptionToDB(transcription);
 
         if (socket) {
             socket.emit('transcription', transcription);
