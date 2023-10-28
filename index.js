@@ -19,7 +19,8 @@ io.on('connection', (socket) => {
 
 
 const transcriptionRoutes = require('./routes/transcription');
-const notesRoutes = require('./routes/notes');
+const chatGptRoutes = require('./utils/chatgpt');
+
 
 app.use(express.json());
 app.use(cors());
@@ -27,7 +28,8 @@ app.use(express.static('public'));
 
 
 app.use('/transcription', transcriptionRoutes);
-// app.use('/notes', notesRoutes);
+app.use('/chatgpt', chatGptRoutes);
+
 
 app.get('/', (req, res) => {
     res.send('Server is running');
