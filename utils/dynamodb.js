@@ -27,4 +27,4 @@ const saveTranscriptionToDB  = (transcription, summary) => {
     });
 };
 
-module.exports = { saveTranscriptionToDB  };
+module.exports = { saveTranscriptionToDB ,docClient };
