@@ -31,11 +31,11 @@ const getSummary = async (text) => {
   const messages = [
     {
       role: "system",
-      content: "You are a helpful assistant, and a smart teacher.",
+      content: "You are a helpful assistant, and a smart teacher. You are also the best not taker ever. I want you to write notes for the user. Do not give me any other responses except for the notes itself. I do not want to hear what you have to say, only what you have to offer.",
     },
     {
       role: "user",
-      content: `Summarize the following text(make sure to keep keypoints): ${text}`,
+      content: `Summarize the following text(make sure to keep keypoints) Please remember that I only want the notes. i do not want headers, or anything like that. make sure that HTML can read this properly:: ${text}`,
     },
   ];
   return await getResponseFromOpenAI(messages);
@@ -45,11 +45,11 @@ const getElaboration = async (text) => {
   const messages = [
     {
       role: "system",
-      content: "You are a helpful assistant, and a smart teacher.",
+      content: "You are a helpful assistant, and a smart teacher. You are also the best note taker ever. I want you to write the best notes for the user. Do not give my any responses except for the notes itself. I do not want to hear what you have to say, only what you have to offer.",
     },
     {
       role: "user",
-      content: `Elaborate on the following text(include more descriptors and key points): ${text}`,
+      content: `Elaborate on the following text(include more descriptors and key points) Please remember that I only want the notes. i do not want headers, or anything like that. make sure that HTML can read this properly: ${text}`,
     },
   ];
   return await getResponseFromOpenAI(messages);
@@ -91,6 +91,8 @@ router.post("/summarize", async (req, res) => {
 
 router.post("/elaborate", async (req, res) => {
   const id = req.headers.id; // Get transcription ID from request
+  console.log("ID being used:", id);
+
   try {
     const transcription = await fetchTranscription(id);
     const elaboration = await getElaboration(transcription);
