@@ -9,9 +9,7 @@ router.post("/upload", multerUpload.single("audio"), async (req, res) => {
   }
 
   const uid = req.body.id;
-  if (!uid) {
-    return res.status(400).send("User UID not provided.");
-  }
+  
 
   console.log("File received.");
   console.log("File size:", req.file.size);

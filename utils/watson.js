@@ -67,8 +67,10 @@ const transcribeAudio = async (audioBuffer, uid, socket) => {
       .map((result) => result.alternatives[0].transcript)
       .join(" ");
 
+    if (uid) {
     saveTranscriptionToDB(uid, transcription);
-
+    }
+    
     if (socket) {
       socket.emit("transcription", transcription);
     }
